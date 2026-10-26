@@ -70,75 +70,6 @@ theta_r = sol.y[1, :]
 
 pos_x, pos_y = conv(theta_l, theta_r)
 
-
-#--------------------------- Plotting simulation -------------------------------
-
-# Plotting the findings (AI assistance)
-BLUE, ORANGE = "#2a78d6", "#eb6834"     # left motor / x  and  right motor / y
-INK, MUTED, GRID = "#1f1f1f", "#6b6b6b", "#e4e4e4"
-
-plt.rcParams.update({
-    "font.size": 10, "axes.titlesize": 11, "axes.titleweight": "bold",
-    "axes.titlelocation": "left", "axes.labelcolor": INK, "axes.edgecolor": "#b8b8b8",
-    "xtick.color": MUTED, "ytick.color": MUTED, "axes.grid": True,
-    "grid.color": GRID, "grid.linewidth": 0.8, "axes.spines.top": False,
-    "axes.spines.right": False, "legend.frameon": False, "lines.linewidth": 2,
-})
-
-if time_array[-1] < 1:                   # short run: show milliseconds
-    t_plot, t_label = time_array * 1e3, "time [ms]"
-else:
-    t_plot, t_label = time_array, "time [s]"
-x_mm, y_mm = pos_x * 1e3, pos_y * 1e3    # position in millimetres
-omega_l, omega_r = sol.y[2, :], sol.y[3, :]
-i_l, i_r = sol.y[4, :], sol.y[5, :]
-
-fig, ax = plt.subplots(2, 2, figsize=(11, 7.5), constrained_layout=True)
-fig.suptitle(f"Constant input: $u_l$ = {u[0, 0]:g} V, $u_r$ = {u[1, 0]:g} V",
-             fontsize=13, fontweight="bold", x=0.01, ha="left")
-
-# (a) head position over time
-a1 = ax[0, 0]
-a1.plot(t_plot, x_mm, color=BLUE, label="x")
-a1.plot(t_plot, y_mm, color=ORANGE, label="y")
-a1.set_title("Head position")
-a1.set_xlabel(t_label); a1.set_ylabel("position [mm]")
-a1.legend(loc="upper left")
-
-# (b) path of the head over the bed
-a2 = ax[0, 1]
-a2.add_patch(plt.Rectangle((0, 0), d_x * 1e3, d_y * 1e3, facecolor="#f2f2f2",
-                           edgecolor="#9a9a9a", linewidth=1.2, zorder=0,
-                           label="print bed"))
-a2.plot(x_mm, y_mm, color=INK)
-a2.plot(x_mm[0], y_mm[0], "o", color=INK, markersize=7, label="start")
-a2.plot(x_mm[-1], y_mm[-1], "o", markerfacecolor="white", markeredgecolor=INK,
-        markeredgewidth=2, markersize=8, label="end")
-a2.set_title("Path of the head")
-a2.set_xlabel("x [mm]"); a2.set_ylabel("y [mm]")
-a2.set_aspect("equal", adjustable="datalim")
-a2.legend(loc="upper right")
-
-# (c) motor speeds
-a3 = ax[1, 0]
-a3.plot(t_plot, omega_l, color=BLUE, label=r"$\omega_l$ (left)")
-a3.plot(t_plot, omega_r, color=ORANGE, label=r"$\omega_r$ (right)")
-a3.axhline(0, color="#b8b8b8", linewidth=1)
-a3.set_title("Motor speeds")
-a3.set_xlabel(t_label); a3.set_ylabel("angular speed [rad/s]")
-a3.legend(loc="best")
-
-# (d) motor currents
-a4 = ax[1, 1]
-a4.plot(t_plot, i_l, color=BLUE, label=r"$i_l$ (left)")
-a4.plot(t_plot, i_r, color=ORANGE, label=r"$i_r$ (right)")
-a4.axhline(0, color="#b8b8b8", linewidth=1)
-a4.set_title("Motor currents")
-a4.set_xlabel(t_label); a4.set_ylabel("current [A]")
-a4.legend(loc="best")
-
-plt.show()
-
 # ------------------------ Decoupled system Q1.3 -----------------------------
 M_x = m + 2*J_m/r_m**2
 M_y = m + m_b + 2*J_m/r_m**2
@@ -215,6 +146,9 @@ def simulation(X, Y, t, u_l, u_r):
     return x_sim, y_sim
 
 # Plotting the result (AI assistance)
+plt.rcParams["axes.grid"] = True
+BLUE, ORANGE = "#2a78d6", "#eb6834"  # left motor / x  and  right motor / y
+INK, MUTED, GRID = "#1f1f1f", "#6b6b6b", "#e4e4e4"
 def plot_shape(name, X, Y, t, u_l, u_r, x_sim, y_sim):
     fig, ax = plt.subplots(1, 2, figsize=(11, 4.4), constrained_layout=True)
     fig.suptitle(name, fontsize=13, fontweight="bold", x=0.01, ha="left")
@@ -242,7 +176,6 @@ def plot_shape(name, X, Y, t, u_l, u_r, x_sim, y_sim):
     ax2.set_xlabel("time [s]")
     ax2.set_ylabel("voltage [V]")
     ax2.legend(loc="best", fontsize=8.5)
-
 # ----------------- Defining the ellipse ------------------
 T_end = 4.0
 t, phi = timing(T_end)
@@ -251,28 +184,28 @@ x_c = 0.125
 y_c = 0.125
 a_e = 0.030
 b_e = 0.020
+if __name__ == "__main__":
+    X = x_c + a_e*np.cos(phi)
+    Y = y_c + b_e*np.sin(phi)
 
-X = x_c + a_e*np.cos(phi)
-Y = y_c + b_e*np.sin(phi)
+    u_l, u_r = motor_voltages(X, Y, t)
+    x_sim, y_sim = simulation(X, Y, t, u_l, u_r)
 
-u_l, u_r = motor_voltages(X, Y, t)
-x_sim, y_sim = simulation(X, Y, t, u_l, u_r)
-
-plot_shape("Ellipse", X, Y, t, u_l, u_r, x_sim, y_sim)
-plt.show()
+    plot_shape("Ellipse", X, Y, t, u_l, u_r, x_sim, y_sim)
+    plt.show()
 
 # ------------------ Infinity symbol -------------------
 A_8 = 0.070
 B_8 = 0.040
+if __name__ == "__main__":
+    X_8 = x_c + A_8*np.sin(phi)
+    Y_8 = y_c + B_8*np.sin(2*phi)
 
-X_8 = x_c + A_8*np.sin(phi)
-Y_8 = y_c + B_8*np.sin(2*phi)
+    u_l_8, u_r_8 = motor_voltages(X_8, Y_8, t)
+    x_8, y_8 = simulation(X_8, Y_8, t, u_l_8, u_r_8)
 
-u_l_8, u_r_8 = motor_voltages(X_8, Y_8, t)
-x_8, y_8 = simulation(X_8, Y_8, t, u_l_8, u_r_8)
-
-plot_shape("Infinity", X_8, Y_8, t, u_l_8, u_r_8, x_8, y_8)
-plt.show()
+    plot_shape("Infinity", X_8, Y_8, t, u_l_8, u_r_8, x_8, y_8)
+    plt.show()
 
 # ----------------- Q 1.5 --------------------
 # Construction of state derivative of the nozzle dynamics
@@ -289,70 +222,71 @@ def nozzle(t, x_n, u_n):
 # Voltage needed to keep the temperature constant
 u_hold = np.sqrt(R_n * (T_n_ref - T_e) / R_tn)
 # Initial state of the nozzle
-x_n0 = np.array([T_e, 0, 0])
+if __name__ == "__main__":
+    x_n0 = np.array([T_e, 0, 0])
 
-# 2 different time scales dynamics occur, the electrical and thermal parts
-# Electrical dynamics
-t_a = np.linspace(0, 3e-3, 1000)
-sol_a = solve_ivp(nozzle, (0, 3e-3), x_n0, args=(u_n_max,), t_eval=t_a,
-                  method="Radau", rtol=1e-8, atol=1e-10)
-# Thermal dynamics
-# If the temperature is below the reference, use full voltage to get there, if reached, keep the voltage the same
-def heating(t, x_n):
-    T_n = x_n[0]
+    # 2 different time scales dynamics occur, the electrical and thermal parts
+    # Electrical dynamics
+    t_a = np.linspace(0, 3e-3, 1000)
+    sol_a = solve_ivp(nozzle, (0, 3e-3), x_n0, args=(u_n_max,), t_eval=t_a,
+                      method="Radau", rtol=1e-8, atol=1e-10)
+    # Thermal dynamics
+    # If the temperature is below the reference, use full voltage to get there, if reached, keep the voltage the same
+    def heating(t, x_n):
+        T_n = x_n[0]
 
-    if T_n < T_n_ref:
-        u_n = u_n_max
-    else:
-        u_n = u_hold
+        if T_n < T_n_ref:
+            u_n = u_n_max
+        else:
+            u_n = u_hold
 
-    return nozzle(t, x_n, u_n)
-# Solve the ODE
-t_h = np.linspace(0, 300, 601)
-sol_n = solve_ivp(heating, (0,300), x_n0, t_eval=t_h,
-                      method="Radau", rtol=1e-6, atol=1e-8)
-T_sim = sol_n.y[0]
-u_b = np.where(T_sim < T_n_ref, u_n_max, u_hold)
+        return nozzle(t, x_n, u_n)
+    # Solve the ODE
+    t_h = np.linspace(0, 300, 601)
+    sol_n = solve_ivp(heating, (0,300), x_n0, t_eval=t_h,
+                          method="Radau", rtol=1e-6, atol=1e-8)
+    T_sim = sol_n.y[0]
+    u_b = np.where(T_sim < T_n_ref, u_n_max, u_hold)
 
 
-# ------------------ Plotting (AI assistance) --------------------
-fig, ax = plt.subplots(2, 2, figsize=(11, 7.5), constrained_layout=True)
-fig.suptitle("Nozzle heater", fontsize=13, fontweight="bold", x=0.01, ha="left")
+    # ------------------ Plotting (AI assistance) --------------------
+    fig, ax = plt.subplots(2, 2, figsize=(11, 7.5), constrained_layout=True)
+    fig.suptitle("Nozzle heater", fontsize=13, fontweight="bold", x=0.01, ha="left")
 
-# (a) electrical start-up: heater voltage
-ax1 = ax[0, 0]
-ax1.plot(t_a * 1e3, sol_a.y[2], color=BLUE, label="$v_C$")
-ax1.axhline(u_n_max, color=MUTED, linestyle="--", linewidth=1, label="supply voltage")
-ax1.set_title("Start-up: heater voltage $v_C$")
-ax1.set_xlabel("time [ms]")
-ax1.set_ylabel("voltage [V]")
-ax1.legend(loc="lower right", fontsize=8.5)
+    # (a) electrical start-up: heater voltage
+    ax1 = ax[0, 0]
+    ax1.plot(t_a * 1e3, sol_a.y[2], color=BLUE, label="$v_C$")
+    ax1.axhline(u_n_max, color=MUTED, linestyle="--", linewidth=1, label="supply voltage")
+    ax1.set_title("Start-up: heater voltage $v_C$")
+    ax1.set_xlabel("time [ms]")
+    ax1.set_ylabel("voltage [V]")
+    ax1.legend(loc="lower right", fontsize=8.5)
 
-# (b) electrical start-up: current
-ax2 = ax[0, 1]
-ax2.plot(t_a * 1e3, sol_a.y[1], color=ORANGE, label="$i_n$")
-ax2.axhline(u_n_max / R_n, color=MUTED, linestyle="--", linewidth=1, label="steady state $u_n/R_n$")
-ax2.set_title("Start-up: current $i_n$")
-ax2.set_xlabel("time [ms]")
-ax2.set_ylabel("current [A]")
-ax2.legend(loc="lower right", fontsize=8.5)
+    # (b) electrical start-up: current
+    ax2 = ax[0, 1]
+    ax2.plot(t_a * 1e3, sol_a.y[1], color=ORANGE, label="$i_n$")
+    ax2.axhline(u_n_max / R_n, color=MUTED, linestyle="--", linewidth=1, label="steady state $u_n/R_n$")
+    ax2.set_title("Start-up: current $i_n$")
+    ax2.set_xlabel("time [ms]")
+    ax2.set_ylabel("current [A]")
+    ax2.legend(loc="lower right", fontsize=8.5)
 
-# (c) temperature
-ax3 = ax[1, 0]
-ax3.plot(t_h, T_sim, color=ORANGE, label="$T_n$")
-ax3.axhline(T_n_ref, color=MUTED, linestyle="--", linewidth=1, label="target")
-ax3.set_title("Heating up: nozzle temperature")
-ax3.set_xlabel("time [s]")
-ax3.set_ylabel("temperature [C]")
-ax3.legend(loc="lower right", fontsize=8.5)
+    # (c) temperature
+    ax3 = ax[1, 0]
+    ax3.plot(t_h, T_sim, color=ORANGE, label="$T_n$")
+    ax3.axhline(T_n_ref, color=MUTED, linestyle="--", linewidth=1, label="target")
+    ax3.set_title("Heating up: nozzle temperature")
+    ax3.set_xlabel("time [s]")
+    ax3.set_ylabel("temperature [C]")
+    ax3.legend(loc="lower right", fontsize=8.5)
 
-# (d) applied voltage
-ax4 = ax[1, 1]
-ax4.plot(t_h, u_b, color=ORANGE, label="$u_n$")
-ax4.set_title("Heating up: applied voltage $u_n$")
-ax4.set_xlabel("time [s]")
-ax4.set_ylabel("voltage [V]")
-ax4.set_ylim(0, u_n_max * 1.15)
-ax4.legend(loc="lower right", fontsize=8.5)
+    # (d) applied voltage
+    ax4 = ax[1, 1]
+    ax4.plot(t_h, u_b, color=ORANGE, label="$u_n$")
+    ax4.set_title("Heating up: applied voltage $u_n$")
+    ax4.set_xlabel("time [s]")
+    ax4.set_ylabel("voltage [V]")
+    ax4.set_ylim(0, u_n_max * 1.15)
+    ax4.legend(loc="lower right", fontsize=8.5)
 
-plt.show()
+    plt.show()
