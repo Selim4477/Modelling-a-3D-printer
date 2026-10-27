@@ -8,8 +8,8 @@ from Parameters import *
 a = J_m + (m *r_m**2)/2 +(m_b*r_m**2)/4
 c = -(m_b*r_m**2)/4
 delta = a**2 -c**2
-b1 = ((r_m**2)/4) * (mu_lx + mu_ly + 12*mu_r)
-b2 = ((r_m**2)/4) * (mu_lx - mu_ly + 4*mu_r)
+b1 = ((r_m**2)/4) * (2*mu_lx + 2*mu_ly + 12*mu_r)
+b2 = ((r_m**2)/4) * (2*mu_lx - 2*mu_ly + 4*mu_r)
 p1 = (a*b1 - c*b2)/delta
 p2 = (a*b2 - c*b1)/delta
 k1 = a*K_m/delta
@@ -73,8 +73,8 @@ pos_x, pos_y = conv(theta_l, theta_r)
 # ------------------------ Decoupled system Q1.3 -----------------------------
 M_x = m + 2*J_m/r_m**2
 M_y = m + m_b + 2*J_m/r_m**2
-b_x = mu_lx + 8*mu_r
-b_y = mu_ly + 4*mu_r
+b_x = 2*mu_lx + 8*mu_r
+b_y = 2*mu_ly + 4*mu_r
 
 # Decoupled x
 A_x = np.array([
