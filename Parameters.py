@@ -14,7 +14,7 @@ m = 0.4 # tool head mass
 m_b = 0.3 # bar mass
 
 mu_r  = 0.05 # angular bearing friction coefficient
-mu_lx = 0.05 # linear bearing friction in x direction
+mu_lx = 0.5 # linear bearing friction in x direction
 mu_ly = 0.75 # same in y direction
 
 #Print area
